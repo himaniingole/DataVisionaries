@@ -25,7 +25,7 @@ getWorkload(member, tasks)
   # Workforce Allocator: Task Prioritization & Assignment Aid
 
 > College hackathon project, Problem Statement 14: *Workforce Allocation & Task Prioritization*
-> **Team:** [Name 1] (Logic & Data) and [Name 2] (Interface & Demo)
+> **Team: DataVisionaries** [Priya Parate] (Logic & Data) and [Himani Ingole] (Interface & Demo)
 
 ---
 
@@ -221,6 +221,7 @@ All members and tasks in `data.js` are **invented sample data** for demonstratio
 
 | Person | Responsibility |
 |---|---|
-| [Name 1] | `data.js`, `logic.js`, testing edge cases, this README |
-| [Name 2] | `index.html`, `style.css`, `ui.js`, demo script and slides |
+| [Priya Parate] | `data.js`, `logic.js`, testing edge cases, this README |
+| [Himani Ingole
+] | `index.html`, `style.css`, `ui.js`, demo script and slides |
 
