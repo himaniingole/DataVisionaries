@@ -1,11 +1,199 @@
 <!DOCTYPE html>
-<html>
-<head><title>Workforce Allocator</title></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workforce Allocator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
-  <h1>Workforce Allocator</h1>
+  <div class="app">
+
+    <!-- ===== top bar ===== -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">&#9776;</div>
+        <div>
+          <h1>Workforce Allocator</h1>
+          <p id="subtitle" class="muted"></p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="addTaskBtn" class="btn primary" type="button">+ Add task</button>
+        <button id="addMemberBtn" class="btn" type="button">+ Add member</button>
+        <button id="resetBtn" class="btn" type="button">Reset data</button>
+        <span class="badge">MOCK DATA</span>
+      </div>
+    </header>
+
+    <!-- ===== tasks (left) and team (right) ===== -->
+    <main class="layout">
+
+      <section class="tasks-panel">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">TASKS</div>
+            <h2>Priority queue</h2>
+          </div>
+          <div class="muted small">Sorted by priority score &middot; click a row to see why</div>
+        </div>
+
+        <div class="table-scroll">
+          <div class="table">
+            <div class="row head">
+              <div>#</div>
+              <div>TASK</div>
+              <div>SCORE</div>
+              <div>DUE</div>
+              <div>HRS</div>
+              <div>SKILL</div>
+              <div>ASSIGNED</div>
+              <div>STATUS</div>
+              <div></div>
+            </div>
+            <div id="taskList"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="team-panel">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">TEAM</div>
+            <h2>Capacity</h2>
+          </div>
+          <div id="memberCount" class="muted small"></div>
+        </div>
+        <div id="teamList"></div>
+        <div id="capacityFooter" class="capacity-footer"></div>
+      </aside>
+
+    </main>
+
+    <!-- ===== explanation + editable rules ===== -->
+    <section class="why" id="whyPanel">
+      <div class="why-detail" id="whyDetail"></div>
+
+      <div class="weights-box" id="weightsBox">
+        <div class="weights-head">
+          <h3>Scoring weights</h3>
+          <span class="total-pill" id="weightTotal">Total 100%</span>
+        </div>
+
+        <div class="weight-row">
+          <label for="w-urgency">Urgency</label>
+          <input type="range" id="w-urgency" data-key="urgency" min="0" max="100" step="1">
+          <output id="o-urgency">40%</output>
+        </div>
+        <p class="weight-help">How much a close deadline counts.</p>
+
+        <div class="weight-row">
+          <label for="w-importance">Importance</label>
+          <input type="range" id="w-importance" data-key="importance" min="0" max="100" step="1">
+          <output id="o-importance">40%</output>
+        </div>
+        <p class="weight-help">How much the manager's 1-5 rating counts.</p>
+
+        <div class="weight-row">
+          <label for="w-quickWin">Quick win</label>
+          <input type="range" id="w-quickWin" data-key="quickWin" min="0" max="100" step="1">
+          <output id="o-quickWin">20%</output>
+        </div>
+        <p class="weight-help">Small bonus for short tasks.</p>
+
+        <p class="muted small">Weights always total 100%. Moving one slider adjusts the others.</p>
+        <button id="resetWeights" class="btn small-btn" type="button">Reset weights</button>
+      </div>
+    </section>
+
+    <footer class="foot">All data shown is sample data for demonstration.</footer>
+  </div>
+
+  <!-- ===== Add / Edit task ===== -->
+  <div class="modal" id="taskModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+      <h3 id="taskModalTitle">Add task</h3>
+      <form id="taskForm" novalidate>
+        <input type="hidden" id="tf-id">
+        <label class="field">Title
+          <input id="tf-title" type="text" placeholder="e.g. Fix checkout bug">
+        </label>
+        <label class="field">Project (optional)
+          <input id="tf-project" type="text" placeholder="e.g. Storefront">
+        </label>
+        <div class="form-grid">
+          <label class="field">Importance
+            <select id="tf-importance">
+              <option value="1">1 - low</option>
+              <option value="2">2</option>
+              <option value="3">3 - medium</option>
+              <option value="4">4</option>
+              <option value="5">5 - critical</option>
+            </select>
+          </label>
+          <label class="field">Deadline
+            <input id="tf-deadline" type="date">
+          </label>
+          <label class="field">Effort (hours)
+            <input id="tf-effort" type="number" min="0.5" step="0.5">
+          </label>
+          <label class="field">Required skill
+            <input id="tf-skill" type="text" list="skillList" placeholder="e.g. Frontend">
+          </label>
+        </div>
+        <p class="form-error" id="tf-error"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn danger" id="tf-delete" hidden>Delete task</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="tf-cancel">Cancel</button>
+          <button type="submit" class="btn primary">Save task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Add / Edit member ===== -->
+  <div class="modal" id="memberModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="memberModalTitle">
+      <h3 id="memberModalTitle">Add member</h3>
+      <form id="memberForm" novalidate>
+        <input type="hidden" id="mf-id">
+        <div class="form-grid">
+          <label class="field">Name
+            <input id="mf-name" type="text" placeholder="e.g. Nisha">
+          </label>
+          <label class="field">Role
+            <input id="mf-role" type="text" placeholder="e.g. Security Engineer">
+          </label>
+        </div>
+        <label class="field">Skills (separate with commas)
+          <input id="mf-skills" type="text" placeholder="e.g. Security, Backend">
+        </label>
+        <div class="form-grid">
+          <label class="field">Capacity this week (hours)
+            <input id="mf-capacity" type="number" min="1" step="1">
+          </label>
+          <label class="field">Already committed (hours)
+            <input id="mf-load" type="number" min="0" step="1">
+          </label>
+        </div>
+        <label class="check-field">
+          <input id="mf-available" type="checkbox" checked> Available for new work this week
+        </label>
+        <p class="form-error" id="mf-error"></p>
+        <div class="modal-actions">
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="mf-cancel">Cancel</button>
+          <button type="submit" class="btn primary">Save member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <datalist id="skillList"></datalist>
+
   <script src="data.js"></script>
-  <script>
-    console.log(MEMBERS.length + " members, " + TASKS.length + " tasks");
-  </script>
+  <script src="logic.js"></script>
+  <script src="ui.js"></script>
 </body>
 </html>

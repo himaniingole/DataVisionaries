@@ -1,28 +1,4 @@
-## Data model
-
-Task: id, title, importance (1-5), deadline (YYYY-MM-DD), effortHours,
-      skill, status ("To Do" | "In Progress" | "Done"),
-      assigneeId (null or member id), manual (true if overridden)
-
-Member: id, name, role, skills[], capacityHours, baseLoadHours, available
-
-Derived (calculated, never stored):
-  workload hours = baseLoadHours + effortHours of their assigned, not-Done tasks
-  workload %     = workload hours / capacityHours
-
-  calcPriority(task, weights)
-  -> { score: number, breakdown: [ {label, points, note} ] }
-
-suggestAssignee(task, members, tasks)
-  -> { member: object | null, score: number,
-       reasons: [ "Has Frontend skill", "15h free", ... ],
-       rejected: [ {name, why} ] }      // e.g. "Diya: lacks Frontend skill"
-
-getWorkload(member, tasks)
-  -> { hours: number, percent: number, overloaded: boolean }
-
-
-  # Workforce Allocator: Task Prioritization & Assignment Aid
+# Workforce Allocator: Task Prioritization & Assignment Aid
 
 > College hackathon project, Problem Statement 14: *Workforce Allocation & Task Prioritization*
 > **Team:** [Name 1] (Logic & Data) and [Name 2] (Interface & Demo)
@@ -169,14 +145,26 @@ The "Why?" panel lists every candidate with the points they received or the reas
 
 ```
 calcPriority(task, weights)
-  -> { score, breakdown: [ { label, points, note } ] }
+  -> { score, days, weights, parts: [ { label, weight, value, points, detail } ] }
 
-suggestAssignee(task, members, tasks)
-  -> { member | null, score, reasons: [ ... ], rejected: [ { name, why } ] }
+suggestAssignee(task, members, loadMap)      // loadMap = { memberId: hours committed so far }
+  -> { member | null, score, reasons: [ ... ], rejected: [ { name, why } ],
+       overload, warning, message }
 
-getWorkload(member, tasks)
-  -> { hours, percent, overloaded }
+getWorkload(member, plannedTasks)            // plannedTasks = [ { assigneeId, effortHours, status } ]
+  -> { hours, capacity, percent, free, overloaded, level }   // level: "ok" | "high" | "over"
+
+buildPlan(tasks, members, weights)           // the UI calls this after every change
+  -> { rows: [ { task, priority, days, locked, effectiveId, suggestion, isOverride } ],
+       workloads, totalFree }
 ```
+
+**How `buildPlan` avoids piling everything on one person:** it ranks the tasks, counts work that is already
+fixed (manual overrides, In Progress, Done) first, then goes down the ranked list and adds each suggested
+task to its assignee's load before suggesting the next one. Tasks that are still "To Do" and not overridden
+are re-suggested after every change, so one override can shift other suggestions. This is intentional.
+
+Run `node test.js` to check the rules without opening a browser.
 
 ## 10. Demo workflow (one complete user journey)
 
@@ -224,3 +212,10 @@ All members and tasks in `data.js` are **invented sample data** for demonstratio
 | [Name 1] | `data.js`, `logic.js`, testing edge cases, this README |
 | [Name 2] | `index.html`, `style.css`, `ui.js`, demo script and slides |
 
+## 16. Build status
+
+- [x] Phase 1: data model, sample data, function contract
+- [ ] Phase 2: scoring and suggestion logic, task table and team panel
+- [ ] Phase 3: "Why?" panel, manual override, editable weights, saving
+- [ ] Phase 4: testing edge cases and polish
+- [ ] Phase 5: README final check and demo rehearsal
